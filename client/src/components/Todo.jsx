@@ -21,9 +21,7 @@ function Todo() {
   axios.defaults.withCredentials = true;
 
   const handleSubmit = () => {
-    // when error display once not display again
     setError("");
-    // check if inputs are empty or not
     if (title.trim() !== "" && description.trim() !== "") {
       axios
         .post(
@@ -40,12 +38,11 @@ function Todo() {
         )
         .then((res) => {
           if (res.status === 200 || res.status === 201) {
-            setTodos([...todos, { title, description }]);
+            setTodos([...todos, res.data]); // Add newly created todo item
             setMessage("Item added successfully");
             setTimeout(() => {
               setMessage("");
             }, 3000);
-            // action finish input value empty
             setTitle("");
             setDescription("");
           } else {
@@ -54,20 +51,16 @@ function Todo() {
         })
         .catch((err) => {
           console.error("Axios error: ", err);
-          setError("Unable to create todoItem, Please try again later.");
+          setError("Unable to create todo item, Please try again later.");
         });
     } else {
       setError("Title and description cannot be empty");
     }
   };
 
-  // getItem
-
   const getItem = async () => {
     try {
-      const res = await axios.get(api_url + "/get-todo", {
-        withCredentials: true,
-      });
+      const res = await axios.get(api_url + "/get-todo");
       setTodos(res.data);
     } catch (err) {
       console.log(err);
@@ -79,18 +72,16 @@ function Todo() {
   }, []);
 
   const handleEdit = (item) => {
-    console.log("Editing item:", item); // Debug log
-    setEditId(item._id);
+    setEditId(item._id); // Correctly set editId
     setEditTitle(item.title);
     setEditDescription(item.description);
   };
 
   const handleUpdate = () => {
-    console.log("Updating item with ID:", editId); // Debug log
-    if (editTitle.trim() !== "" && editDescription.trim() !== "") {
+    if (editId && editTitle.trim() !== "" && editDescription.trim() !== "") {
       axios
         .put(
-          `${api_url}/update/` + editId,
+          `${api_url}/update/${editId}`,
           {
             title: editTitle,
             description: editDescription,
@@ -112,12 +103,10 @@ function Todo() {
             setMessage("Item updated successfully");
             setEditTitle("");
             setEditDescription("");
-
+            setEditId(null);
             setTimeout(() => {
               setMessage("");
             }, 3000);
-
-            setEditId(null);
           } else {
             setError("Unable to update todo item");
           }
@@ -131,16 +120,14 @@ function Todo() {
     }
   };
 
-  // cancel button
-
   const handleCancel = () => {
     setEditId(null);
+    setEditTitle("");
+    setEditDescription("");
   };
 
-  // delete function
-
   const handleDelete = async (id) => {
-    if (window.confirm("Are you want to delete ?")) {
+    if (window.confirm("Are you sure you want to delete?")) {
       await axios.delete(api_url + "/delete/" + id);
       const deleteTodo = todos.filter((item) => item._id !== id);
       setTodos(deleteTodo);
@@ -177,80 +164,76 @@ function Todo() {
         {error && <p className="text-danger">{error}</p>}
       </div>
 
-      <div className=" d-flex row ms-1 mt-3">
+      <div className="d-flex row ms-1 mt-3">
         {todos.length === 0 ? (
-          <h4 className=" fw-bold text-center mt-5 pt-5 ">
-            No todo data added
-          </h4>
+          <h4 className="fw-bold text-center mt-5 pt-5">No todo data added</h4>
         ) : (
           <h1>Task</h1>
         )}
 
         <ul className="list-group">
           {todos.map((item) => (
-            <>
-              <li
-                key={item._id}
-                className="list-group-item d-flex justify-content-between  align-items-center bg-secondary rounded-4 my-2"
-              >
-                <div className="d-flex flex-column me-2">
-                  {editId === null || editId !== item._id ? (
-                    <>
-                      <span className="fw-bolder">{item.title}</span>
-                      <span>{item.description}</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className=" form-group d-flex gap-3">
-                        <input
-                          className="form-control col-lg-6  "
-                          type="text"
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          placeholder="Title"
-                          value={editTitle}
-                        />
-                        <input
-                          className="form-control col-lg-6 "
-                          type="text"
-                          onChange={(e) => setEditDescription(e.target.value)}
-                          placeholder="Description"
-                          value={editDescription}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="d-flex gap-2">
-                  {editId === null || editId !== item._id ? (
-                    <button
-                      className="btn btn-warning"
-                      onClick={() => handleEdit(item)}
-                    >
-                      Edit
-                    </button>
-                  ) : (
-                    <button
-                      className="btn btn-success text-info"
-                      onClick={handleUpdate}
-                    >
-                      Update
-                    </button>
-                  )}
-                  {editId === null ? (
-                    <button
-                      className="btn  btn-danger"
-                      onClick={() => handleDelete(item._id)}
-                    >
-                      Delete
-                    </button>
-                  ) : (
-                    <button className="btn  btn-danger" onClick={handleCancel}>
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </li>
-            </>
+            <li
+              key={item._id} // Unique key prop
+              className="list-group-item d-flex justify-content-between align-items-center bg-secondary rounded-4 my-2"
+            >
+              <div className="d-flex flex-column me-2">
+                {editId === null || editId !== item._id ? (
+                  <>
+                    <span className="fw-bolder">{item.title}</span>
+                    <span>{item.description}</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group d-flex gap-3">
+                      <input
+                        className="form-control col-lg-6"
+                        type="text"
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder="Title"
+                        value={editTitle}
+                      />
+                      <input
+                        className="form-control col-lg-6"
+                        type="text"
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        placeholder="Description"
+                        value={editDescription}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="d-flex gap-2">
+                {editId === null || editId !== item._id ? (
+                  <button
+                    className="btn btn-warning"
+                    onClick={() => handleEdit(item)}
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-success text-info"
+                    onClick={handleUpdate}
+                  >
+                    Update
+                  </button>
+                )}
+                {editId === null ? (
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleDelete(item._id)}
+                  >
+                    Delete
+                  </button>
+                ) : (
+                  <button className="btn btn-danger" onClick={handleCancel}>
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </li>
           ))}
         </ul>
       </div>
