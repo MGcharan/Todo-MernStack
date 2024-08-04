@@ -10,13 +10,13 @@ function Todo() {
   const [message, setMessage] = useState("");
 
   // EditId
-  const [editId, setEditId] = useState(-1);
+  const [editId, setEditId] = useState(null);
 
   // Edit
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
 
-  const api_url = `${process.env.REACT_APP_BACKEND_URL}/api`;
+  const api_url = `${import.meta.env.VITE_BACKEND_URL}/api`;
 
   axios.defaults.withCredentials = true;
 
@@ -65,7 +65,9 @@ function Todo() {
 
   const getItem = async () => {
     try {
-      const res = await axios.get(api_url + "/get-todo");
+      const res = await axios.get(api_url + "/get-todo", {
+        withCredentials: true,
+      });
       setTodos(res.data);
     } catch (err) {
       console.log(err);
@@ -77,16 +79,18 @@ function Todo() {
   }, []);
 
   const handleEdit = (item) => {
+    console.log("Editing item:", item); // Debug log
     setEditId(item._id);
     setEditTitle(item.title);
     setEditDescription(item.description);
   };
 
   const handleUpdate = () => {
+    console.log("Updating item with ID:", editId); // Debug log
     if (editTitle.trim() !== "" && editDescription.trim() !== "") {
       axios
         .put(
-          `${api_url}/update/${editId}`,
+          `${api_url}/update/` + editId,
           {
             title: editTitle,
             description: editDescription,
@@ -113,7 +117,7 @@ function Todo() {
               setMessage("");
             }, 3000);
 
-            setEditId(-1);
+            setEditId(null);
           } else {
             setError("Unable to update todo item");
           }
@@ -130,7 +134,7 @@ function Todo() {
   // cancel button
 
   const handleCancel = () => {
-    setEditId(-1);
+    setEditId(null);
   };
 
   // delete function
@@ -185,9 +189,12 @@ function Todo() {
         <ul className="list-group">
           {todos.map((item) => (
             <>
-              <li className="list-group-item d-flex justify-content-between  align-items-center bg-secondary rounded-4 my-2">
+              <li
+                key={item._id}
+                className="list-group-item d-flex justify-content-between  align-items-center bg-secondary rounded-4 my-2"
+              >
                 <div className="d-flex flex-column me-2">
-                  {editId == -1 || editId !== item._id ? (
+                  {editId === null || editId !== item._id ? (
                     <>
                       <span className="fw-bolder">{item.title}</span>
                       <span>{item.description}</span>
@@ -214,7 +221,7 @@ function Todo() {
                   )}
                 </div>
                 <div className="d-flex gap-2">
-                  {editId == -1 || editId !== item._id ? (
+                  {editId === null || editId !== item._id ? (
                     <button
                       className="btn btn-warning"
                       onClick={() => handleEdit(item)}
@@ -229,7 +236,7 @@ function Todo() {
                       Update
                     </button>
                   )}
-                  {editId == -1 ? (
+                  {editId === null ? (
                     <button
                       className="btn  btn-danger"
                       onClick={() => handleDelete(item._id)}
