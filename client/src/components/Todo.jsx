@@ -16,7 +16,7 @@ function Todo() {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
 
-  const api_url = "http://localhost:2024/api";
+  const api_url = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
   axios.defaults.withCredentials = true;
 
